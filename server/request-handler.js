@@ -40,36 +40,34 @@ var requestHandler = function(request, response) {
   // debugging help, but you should always be careful about leaving stray
   // console.logs in your code.
   console.log('Serving request type ' + request.method + ' for url ' + request.url);
+
   // The outgoing status.
   var statusCode = 200;
-
   // See the note below about CORS headers.
   var headers = defaultCorsHeaders;
-
   var method = request.method;
-
   var url = request.url;
 
-  responseBody.headers  = headers;
+  responseBody.headers = headers;
   responseBody.method = method;
   responseBody.url = url;
 
   // at this point, `body` has the entire request body stored in it as a string
-  if(!request.url.startsWith('/classes/messages' || '/classes/room')) {
+  if (!request.url.startsWith('/classes/messages' || '/classes/room')) {
     statusCode = 404;
   }
   
-  if(request.method === 'OPTIONS') {
-      response.writeHead(statusCode, headers);
-      response.end();
+  if (request.method === 'OPTIONS') {
+    response.writeHead(statusCode, headers);
+    response.end();
   }
 
-  if(request.method === 'GET') {
-      response.writeHead(statusCode, headers);
-      response.end(JSON.stringify({ results: responseBody.results }));
+  if (request.method === 'GET') {
+    response.writeHead(statusCode, headers);
+    response.end(JSON.stringify({ results: responseBody.results }));
   }
 
-  if(request.method === 'POST') {
+  if (request.method === 'POST') {
     var body = '';
     var data = {};
     request.on('data', function(data) {
@@ -110,4 +108,4 @@ var requestHandler = function(request, response) {
 // Another way to get around this restriction is to serve you chat
 // client from this domain by setting up static file serving.
 
-module.exports.requestHandler  = requestHandler;
+module.exports.requestHandler = requestHandler;
