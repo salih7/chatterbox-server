@@ -18,6 +18,8 @@ var defaultCorsHeaders = {
   'access-control-max-age': 10 // Seconds.
 };
 
+var responseBody = { results: [] };
+
 var requestHandler = function(request, response) {
   // Request and Response come from node's http module.
   //
@@ -34,7 +36,6 @@ var requestHandler = function(request, response) {
   // debugging help, but you should always be careful about leaving stray
   // console.logs in your code.
   console.log('Serving request type ' + request.method + ' for url ' + request.url);
-
   // The outgoing status.
   var statusCode = 200;
 
@@ -45,37 +46,36 @@ var requestHandler = function(request, response) {
 
   var url = request.url;
 
-  var results = [];
-
-
   // at this point, `body` has the entire request body stored in it as a string
+  if(request.url !== ('/classes/messages' || '/classes/room')) {
+    statusCode = 404;
+  }
 
   if(request.method === 'POST') {
     var body = '';
     request.on('data', function(data) {
       body += data;
-    }).on('end', function() {
+    });
+
+    request.on('end', function() {
       responseBody.results.push(JSON.parse(body));
     });
-    // console.log(results);
+
     statusCode = 201;
   }
+  
   // Tell the client we are sending them plain text.
   //
   // You will need to change this if you are sending something
   // other than plain text, like JSON or HTML.
-  // if(request.url === '/classes/messages') {
-  headers['Content-Type'] = 'application/JSON';    
-  // } else {
-    // headers['Content-Type'] = 'text/plain'; 
-  // }
+  
+  headers['Content-Type'] = 'application/JSON';
 
-  responseBody = {
-    headers: headers,
-    method: method,
-    url: url,
-    results: results
-  };
+  // headers['Content-Type'] = 'text/plain'; 
+
+  responseBody.headers  = headers;
+  responseBody.method = method;
+  responseBody.url = url;
 
   // .writeHead() writes to the request line and headers of the response,
   // which includes the status and all headers.
@@ -100,6 +100,5 @@ var requestHandler = function(request, response) {
 //
 // Another way to get around this restriction is to serve you chat
 // client from this domain by setting up static file serving.
-
 
 module.exports.requestHandler  = requestHandler;
