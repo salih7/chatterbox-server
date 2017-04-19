@@ -12,6 +12,7 @@ this file and include it in basic-server.js so that it actually works.
 
 **************************************************************/
 const querystring = require('querystring');
+
 var defaultCorsHeaders = {
   'access-control-allow-origin': '*',
   'access-control-allow-methods': 'GET, POST, PUT, DELETE, OPTIONS',
@@ -24,7 +25,7 @@ var responseBody = { results: [{}] };
 
 var objectId = 0;
 
-var requestHandler = function(request, response) {
+module.exports.requestHandler = function(request, response) {
   // Request and Response come from node's http module.
   //
   // They include information about both the incoming request, such as
@@ -55,48 +56,44 @@ var requestHandler = function(request, response) {
   // at this point, `body` has the entire request body stored in it as a string
   if (!request.url.startsWith('/classes/messages' || '/classes/room')) {
     statusCode = 404;
-  }
-  
-  if (request.method === 'OPTIONS') {
-    response.writeHead(statusCode, headers);
-    response.end();
-  }
-
-  if (request.method === 'GET') {
-    response.writeHead(statusCode, headers);
-    response.end(JSON.stringify({ results: responseBody.results }));
-  }
-
-  if (request.method === 'POST') {
-    var body = '';
-    var data = {};
-    request.on('data', function(data) {
-      body += data;
-    });
-
-    request.on('end', function() {
-      data = querystring.parse(body);
-      data.objectId = (objectId += 1);
-      responseBody.results.push(data);
+  } else {
+    if (request.method === 'OPTIONS') {
       response.writeHead(statusCode, headers);
-      response.end(JSON.stringify(responseBody));
-    });
+      response.end();
+    } else if (request.method === 'GET') {
+      response.writeHead(statusCode, headers);
+      response.end(JSON.stringify({ results: responseBody.results }));
+    } else if (request.method === 'POST') {
+      var body = '';
+      var data = {};
+      request.on('data', function(data) {
+        body += data;
+      });
 
-    statusCode = 201;
+      request.on('end', function() {
+        data = querystring.parse(body);
+        data.objectId = ++objectId;
+        responseBody.results.push(data);
+        response.writeHead(statusCode, headers);
+        response.end(JSON.stringify({objectId: 1}));
+      });
+
+      statusCode = 201;
+    }
   }
-  
 
-  // .writeHead() writes to the request line and headers of the response,
-  // which includes the status and all headers.
-
-  // Make sure to always call response.end() - Node may not send
-  // anything back to the client until you do. The string you pass to
-  // response.end() will be the body of the response - i.e. what shows
-  // up in the browser.
-  //
-  // Calling .end "flushes" the response's internal buffer, forcing
-  // node to actually send all the data over to the client.
 };
+
+// .writeHead() writes to the request line and headers of the response,
+// which includes the status and all headers.
+
+// Make sure to always call response.end() - Node may not send
+// anything back to the client until you do. The string you pass to
+// response.end() will be the body of the response - i.e. what shows
+// up in the browser.
+//
+// Calling .end "flushes" the response's internal buffer, forcing
+// node to actually send all the data over to the client.
 
 // These headers will allow Cross-Origin Resource Sharing (CORS).
 // This code allows this server to talk to websites that
@@ -108,4 +105,3 @@ var requestHandler = function(request, response) {
 // Another way to get around this restriction is to serve you chat
 // client from this domain by setting up static file serving.
 
-module.exports.requestHandler = requestHandler;
